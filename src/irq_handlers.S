@@ -2,11 +2,9 @@
     .globl IRQ0_handler
     .extern IRQ0_handler_c
 
-# gcc preserves rbp and r12-r15 and videomem doesn't modify them
-# gcc also preserves rbx but videomem functions use ebx
+# gcc preserves rbp, rbx and r12-r15
 .macro push_registers
     push %rax
-    push %rbx
     push %rcx
     push %rdx
     push %rdi
@@ -26,7 +24,6 @@
     pop %rdi
     pop %rdx
     pop %rcx
-    pop %rbx
     pop %rax
 .endm
 
