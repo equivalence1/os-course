@@ -7,8 +7,6 @@ idt_ptr_t  idt_ptr;
 
 // extern is useless here. Just for clarity
 extern void IRQ0_handler(void);
-extern void ignoring_handler(void);
-extern void ignoring_handler_with_error_code(void);
 
 void set_idt_gate(uint8_t num, uint64_t base, uint16_t selector, uint8_t flags) {
     idt[num].offset_low  = base & 0xFFFF;
