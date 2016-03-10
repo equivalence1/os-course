@@ -24,6 +24,8 @@ static inline uintptr_t kernel_phys(void *addr)
 static inline void *kernel_virt(uintptr_t addr)
 { return (void *)KERNEL_VIRT(addr); }
 
+uint64_t get_bits(uint64_t x, int from, int how_many);
+
 #endif /*__ASM_FILE__*/
 
 #endif /*__MEMORY_H__*/

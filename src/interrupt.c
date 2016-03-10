@@ -9,9 +9,9 @@ idt_ptr_t  idt_ptr;
 extern void IRQ0_handler(void);
 
 void set_idt_gate(uint8_t num, uint64_t base, uint16_t selector, uint8_t flags) {
-    idt[num].offset_low  = base & 0xFFFF;
-    idt[num].offset_mid  = (base >> 16) & 0xFFFF;
-    idt[num].offset_high = (base >> 32) & 0xFFFFFFFF;
+    idt[num].offset_low  = get_bits(base, 0, 16);
+    idt[num].offset_mid  = get_bits(base, 16, 16);
+    idt[num].offset_high = get_bits(base, 32, 32);
     idt[num].selector = selector;
     idt[num].zero = 0;
     idt[num].flags = flags;

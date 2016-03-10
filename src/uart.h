@@ -2,6 +2,7 @@
 #define __UART_H__
 
 #include "ioport.h"
+#include "memory.h"
 
 #define UART_FIRST_PORT      0x3F8
 #define UART_LCR_DIV_MODE    0x83 // 0b10000011
