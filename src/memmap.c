@@ -29,10 +29,6 @@ static multiboot_mmap_entry_t make_os_mmap_entry() {
     return os_entry;
 }
 
-static inline int is_inside(multiboot_mmap_entry_t *a, multiboot_mmap_entry_t *b) {
-    return (b->addr <= a->addr && b->addr + b->len >= a->addr);
-}
-
 void mmap_reserve_os(void) {
     multiboot_mmap_entry_t os_entry = make_os_mmap_entry();
     os_mmap.entries[os_mmap.size++] = os_entry;
