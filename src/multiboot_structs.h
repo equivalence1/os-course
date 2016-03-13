@@ -87,12 +87,13 @@ typedef struct multiboot_mmap_entry multiboot_mmap_entry_t;
 struct mmap
 {
     int size;
-#define MMAP_ARRAY_MAX_SIZE 33
+#define MMAP_ARRAY_MAX_SIZE 33 + 100
     multiboot_mmap_entry_t entries[MMAP_ARRAY_MAX_SIZE];
 /**
  * According to GRUB specification it's mmap maximum size is 32.
  * http://fossies.org/dox/grub-2.00/multiboot__mmap_8c_source.html#l00034
  * In our case we make it maximum 33 in length as we need to reserve our OS
+ * Also we can reserve up to 100 mem areas in our boot allocator
  */
 } __attribute__((packed));
 typedef struct mmap mmap_t;
