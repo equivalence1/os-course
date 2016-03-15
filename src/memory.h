@@ -22,6 +22,12 @@
 
 #define BOOTMEM_SIZE      (4ull * 1024ull * 1024ull * 1024ull)
 
+struct memory_segment {
+    uint64_t begin;
+    uint64_t end;
+} __attribute__((packed));
+typedef struct memory_segment memory_segment_t;
+
 typedef uintptr_t phys_t;
 typedef uintptr_t virt_t;
 

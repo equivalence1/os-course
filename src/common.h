@@ -1,6 +1,8 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <stdint.h>
+
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_GREEN "\x1b[32m"
 #define ANSI_COLOR_YELLOW "\x1b[33m"
@@ -13,6 +15,8 @@
     for (int i = 0; i < (int) size; i++) { \
         f(&arr[i]); \
     }
+
+#define MAX(a, b) ((a) < (b) ? (b) : (a))
 
 static inline uint64_t get_bits(uint64_t x, int from, int how_many) {
     return (x >> from) & ((1L << how_many) - 1);
