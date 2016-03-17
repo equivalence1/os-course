@@ -16,7 +16,13 @@
         f(&arr[i]); \
     }
 
-#define MAX(a, b) ((a) < (b) ? (b) : (a))
+/** 
+ * I don't know why but I'm experiensing some
+ * trougles in uint64_t-uint64_t division
+ */
+static inline uint64_t divide_two(uint64_t x, uint64_t y) {
+    return (uint64_t)((unsigned long long)(x) / (unsigned long long)(y));
+}
 
 static inline uint64_t get_bits(uint64_t x, int from, int how_many) {
     return (x >> from) & ((1L << how_many) - 1);

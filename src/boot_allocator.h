@@ -9,5 +9,4 @@
 
 memory_segment_t boot_reserve_memory(uint64_t size);
 
-
 #endif // __BOOT_ALLOCATOR_H__

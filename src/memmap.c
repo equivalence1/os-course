@@ -8,7 +8,7 @@ static void set_mbt() {
     mbt = (multiboot_info_t *) va(mboot_info);
 }
 
-int mmap_check_ok(void) {
+int mmap_check_presented(void) {
     set_mbt();
     return check_bit(mbt->flags, 6);
 }
@@ -33,22 +33,12 @@ void mmap_add_entry(multiboot_mmap_entry_t entry) {
     os_mmap.entries[os_mmap.size++] = entry;
 }
 
-/**
- * Buddy allocator needs a lot of memory segments.
- * We can't store them all in memory map -- it's gonna be too big.
- * So we just delete this segment of memory from memory map entirely
- */
-void mmap_delete_segment(memory_segment_t *segment) {
-    for (int i = 0; i < os_mmap.size; i++) {
-        if ()
-    }
-}
-
 void mmap_reserve_os(void) {
     mmap_add_entry(make_os_mmap_entry());
 }
 
-static int is_inside(uint64_t point, uint64_t seg_left, uint64_t seg_right) {
+/* this one checks that point is inside of segment */
+static int point_is_inside(uint64_t point, uint64_t seg_left, uint64_t seg_right) {
     if (point >= seg_left && point <= seg_right) {
         return 1;
     } else {
@@ -56,15 +46,17 @@ static int is_inside(uint64_t point, uint64_t seg_left, uint64_t seg_right) {
     }
 }
 
+/* this one cheks that the first segment is inside of the second */
 static int is_inside(const memory_segment_t *first, const memory_segment_t *second) {
-    return (is_inside(first->begin, second->begin, second->end)) && 
-           (is_inside(first->end  , second->begin, second->end));
+    return (point_is_inside(first->begin, second->begin, second->end)) && 
+           (point_is_inside(first->end  , second->begin, second->end));
 }
 
 static int does_intersect(const memory_segment_t *first,
         const memory_segment_t *second) {
-    if (is_inside(first->begin, second->begin, second->end) ||
-            is_inside(first->end, second->begin, second->end)) {
+    if (    point_is_inside(first->begin , second->begin, second->end) ||
+            point_is_inside(first->end   , second->begin, second->end) ||
+            point_is_inside(second->begin, first->begin , first->end)) {
         return 1;
     } else {
         return 0;
@@ -75,7 +67,7 @@ static int does_intersect(const memory_segment_t *first,
  * segment can be used if it lies inside some free block
  * and doesn't itersect with any already reserved block
  */
-int can_be_used(const memory_segment_t *block) {
+int is_free(const memory_segment_t *segment) {
     int lay_in_free = 0;
     int intersect_with_reserved = 0;
 
@@ -84,17 +76,29 @@ int can_be_used(const memory_segment_t *block) {
         current.begin = os_mmap.entries[i].addr;
         current.end = os_mmap.entries[i].addr + os_mmap.entries[i].len - 1;
 
-        if (is_inside(block, &current) && os_mmap.entries[i].type == 1) {
+        if (is_inside(segment, &current) && os_mmap.entries[i].type == 1)
             lay_in_free = 1;
-        }
 
-        if (does_intersect(block, &current) && os_mmap.entries[i].type != 1) {
+        if (does_intersect(segment, &current) && os_mmap.entries[i].type != 1) {
             intersect_with_reserved = 1;
             break;
         }
     }
 
     return (lay_in_free == 1) && (intersect_with_reserved == 0);
+}
+
+memory_segment_t get_memory_range(void) {
+    memory_segment_t segment;
+    segment.begin = UINT64_MAX;
+    segment.end   = 0;
+
+    for (int i = 0; i < os_mmap.size; i++) {
+        segment.begin = MIN(segment.begin, os_mmap.entries[i].addr);
+        segment.end   = MAX(segment.end, os_mmap.entries[i].addr + os_mmap.entries[i].len - 1);
+    }
+
+    return segment;
 }
 
 void get_mmap(void) {
