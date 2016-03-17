@@ -31,11 +31,23 @@ void main(void)
             printf(ANSI_COLOR_RED "could not init buddy allocator." ANSI_COLOR_RESET "\n");
             goto kernel_end;
         }
-
+// FOR DEBUG ONLY!
         printf("initialized\n");
 
-        char *ptr = (char *)buddy_allocate(1234567);
-        printf("ptr: %#llx\n", ptr);
+        char *ptr[10];
+
+        int n = 1;
+        int m = 3;
+        for (int j = 0; j < n; j++) {
+            for (int i = 0; i < m; i++) {
+                ptr[i] = (char *)buddy_allocate(2097152 * 3 + 1);
+                printf(ANSI_COLOR_BLUE "ptr: %#llx\n" ANSI_COLOR_RESET, ptr[i]);
+            }
+            for (int i = 0; i < m; i++) {
+                buddy_free(ptr[i]);
+            }
+        }
+// FOR DEBUG ONLY!
     } else {
         printf(ANSI_COLOR_RED "multiboot did not provide memory map, aborting." ANSI_COLOR_RESET "\n");
         goto kernel_end;

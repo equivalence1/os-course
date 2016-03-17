@@ -1,6 +1,12 @@
 #include "buddy.h"
 
 /**
+ * buddy desc with number i represents memory segment
+ * from PAGE * i to PAGE * (i + 1) - 1 all inclusive.
+ *
+ * buddy number in level i is the number of corresponding
+ * segment if we consider page size = PAGE * (2 ** i);
+ *
  * CONTRACT: if buddy descriptor is a "group leader"
  * (it means it is a first descriptor in buddy node)
  * then it has it's order setted. If it's not in any list
@@ -27,14 +33,14 @@ static char *first_addr;
  * returns the order number of descripor among all descriptors
  */
 static inline uint64_t get_number_in_level(const buddy_descriptor_t *desc, int level_n) {
-    return divide_two(pa(desc) - buddy_space.begin, sizeof(buddy_descriptor_t) * (1 << level_n));
+    return divide_two((char *)desc - first_addr, (sizeof(buddy_descriptor_t) * (1L << level_n)));
 }
 
 static inline buddy_descriptor_t* get_my_buddy(const buddy_descriptor_t *me) {
     uint64_t my_number    = get_number_in_level(me, me->order);
     uint64_t buddy_number = my_number ^ 1;
 
-    return (buddy_descriptor_t *) (first_addr + (buddy_number * (1L << me->order)));
+    return (buddy_descriptor_t *)(first_addr + (sizeof(buddy_descriptor_t) * buddy_number * (1L << me->order)));
 }
 /*
 static int are_buddyes(const buddy_descriptor_t *first, 
@@ -53,6 +59,45 @@ static inline void swap(buddy_descriptor_t **first,
     buddy_descriptor_t *tmp = *first;
     *first = *second;
     *second = tmp;
+}
+
+static memory_segment_t get_segment(buddy_descriptor_t *desc, int order) {
+    memory_segment_t segment;
+
+    segment.begin = PAGE * get_number_in_level(desc, 0);
+    segment.end = segment.begin + PAGE * (1L << order) - 1;
+
+    return segment;
+}
+
+// FOR DEBUG ONLY!
+static void print_levels(void) {
+    printf(ANSI_COLOR_YELLOW);
+    printf("list sizes:\n");
+    for (int i = 0; i < MAX_LEVELS; i++) {
+        printf("level %d size %d   ", i, list_size(list + i));
+            struct list_head *current_head = list[i].next;
+            while (current_head != list + i) {
+                buddy_descriptor_t *desc = CONTAINER_OF(current_head, buddy_descriptor_t, ptrs);
+                memory_segment_t segment = get_segment(desc, desc->order);
+                printf("  %#llx-%#llx (state: %d)  ", segment.begin, segment.end, desc->state);
+                current_head = current_head->next;
+            }
+        printf("\n");
+    }
+    printf(ANSI_COLOR_RESET);
+
+    printf("PAGE = %#llx, n_buddyes = %d\n", PAGE, n_buddyes);
+}
+// FOR DEBUG ONLY!
+
+static void set_state(buddy_descriptor_t *desc) {
+    memory_segment_t segment = get_segment(desc, 0);
+
+    if (is_free(&segment))
+        desc->state = NODE_FREE;
+    else
+        desc->state = NODE_ALLOCATED;
 }
 
 static void merge(buddy_descriptor_t *first,
@@ -84,11 +129,10 @@ static void split(buddy_descriptor_t *desc) {
 
 static void build_lists(void) {
     for (int i = 0; i < MAX_LEVELS; i++) {
-        printf("new level: %d\n", i);
         if (list_empty(list + i))
             break;
 
-        struct list_head *current_head = list[i].next;
+        struct list_head *current_head = list_first(list + i);
         while (current_head != list + i) {
             buddy_descriptor_t *current = 
                 LIST_ENTRY(current_head, buddy_descriptor_t, ptrs);
@@ -103,11 +147,9 @@ static void build_lists(void) {
                 struct list_head *prev_head = current_head->prev;
                 merge(current, current_buddy);
                 current_head = prev_head->next;
-                printf("merged\n");
             } else {
                 current_head = current_head->next;
             }
-            printf("current_head: %#llx, list: %#llx\n", current_head, list + i);
         }
     }
 }
@@ -117,17 +159,15 @@ static void init_buddy_descriptors(void) {
         list_init(list + i);
     }
 
-    /**
-     * initially all descriptors have order = 0
-     */
     first_addr = (char *)(va(buddy_space.begin));
     buddy_descriptor_t *desc = (buddy_descriptor_t *)first_addr;
 
     for (uint64_t i = 0; i < n_buddyes; i++) {
-        desc->order     = 0;
-        desc->state     = NODE_FREE;
+        desc->order = 0;
+        set_state(desc);
 
-        list_add_tail(&desc->ptrs, list + 0);
+        if (desc->state == NODE_FREE)
+            list_add_tail(&desc->ptrs, list + 0);
 
         desc += 1;
     }
@@ -139,23 +179,17 @@ static void init_buddy_descriptors(void) {
  */
 int init_buddy_allocator(void) {
     memory_segment_t all_mem = get_memory_range();
-
     uint64_t mem_size = all_mem.end - all_mem.begin;
-
     n_buddyes = divide_two(mem_size, PAGE);
-    if (mem_size % PAGE != 0)
-        n_buddyes += 1;
-
     buddy_space = boot_reserve_memory(n_buddyes * sizeof(buddy_descriptor_t));
     
     if (buddy_space.begin > buddy_space.end)
         return -1;
 
-    printf("init_desc\n");
     init_buddy_descriptors();
-    printf("build_list\n");
     build_lists();
-    printf("done\n");
+
+    print_levels();
 
     return 0;
 }
@@ -163,7 +197,7 @@ int init_buddy_allocator(void) {
 static inline int get_min_order_to_cover(uint64_t size) {
     int order = 0;
 
-    while ((uint64_t)(1 << order) < size) {
+    while ((uint64_t)(1L << order) * PAGE < size) {
         order += 1;
     }
 
@@ -175,21 +209,64 @@ void* buddy_allocate(uint64_t size) {
     int cur_order = min_order;
 
     while (list_empty(list + cur_order)) {
+        printf(ANSI_COLOR_MAGENTA "level %d is empty. goint on %d\n" ANSI_COLOR_RESET, cur_order, cur_order + 1);
         cur_order++;
+        if (cur_order >= MAX_LEVELS)
+            return NULL;
     }
 
     while (cur_order != min_order) {
         buddy_descriptor_t *desc = 
             CONTAINER_OF(list_first(list + cur_order), buddy_descriptor_t, ptrs);
         split(desc);
+        printf(ANSI_COLOR_MAGENTA "splited order %d, going on %d\n" ANSI_COLOR_RESET, cur_order, cur_order);
         cur_order--;
     }
 
     buddy_descriptor_t *allocated =
         CONTAINER_OF(list_first(list + min_order), buddy_descriptor_t, ptrs);
     allocated->state = NODE_ALLOCATED;
+    list_del(&allocated->ptrs);
 
-    int in_level_number = get_number_in_level(allocated, allocated->order);
+    memory_segment_t segment = get_segment(allocated, allocated->order);
 
-    return va(buddy_space.begin + ((uint64_t)PAGE * (1L << allocated->order) * in_level_number));
+    printf("needed size %lld allocated size %lld\n", size, PAGE * (1L << allocated->order));
+    printf("allocated range: %#llx-%#llx\n", segment.begin, segment.end);
+
+    printf("\n\nAFTER ALLOCATION\n\n");
+    print_levels();
+    printf("\n\nAFTER ALLOCATION\n\n");
+
+    return va(segment.begin);
+}
+
+void buddy_free(void *ptr) {
+    uint64_t node_number = divide_two(pa(ptr), PAGE);
+    buddy_descriptor_t *desc = 
+        (buddy_descriptor_t *)(first_addr + node_number * sizeof(buddy_descriptor_t));
+    
+    if (desc->state == NODE_FREE) // why would you ask to free it?
+        return;
+
+    desc->state = NODE_FREE;
+    list_add_tail(&desc->ptrs, list + desc->order);
+
+    int i = desc->order;
+
+    while (i < MAX_LEVELS) {
+        buddy_descriptor_t *desc_buddy = get_my_buddy(desc);
+
+        if (can_merge(desc, desc_buddy)) {
+            merge(desc, desc_buddy);
+            if (desc_buddy < desc)
+                desc = desc_buddy;
+            i++;
+        } else {
+            break;
+        }
+    }
+
+    printf("\n\nAFTER FREE\n\n");
+    print_levels();
+    printf("\n\nAFTER FREE\n\n");
 }

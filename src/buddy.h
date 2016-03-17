@@ -10,7 +10,7 @@
 #include "boot_allocator.h"
 #include "multiboot_structs.h"
 
-#define PAGE 1 << 21 // 2 MiB
+#define PAGE (1L << 21) // 2 MiB
 #define MAX_LEVELS 43 // 64 - 21
 
 #define NODE_FREE      1
@@ -25,5 +25,6 @@ typedef struct buddy_descriptor buddy_descriptor_t;
 
 int init_buddy_allocator(void);
 void* buddy_allocate(uint64_t size);
+void buddy_free(void *ptr);
 
 #endif // __BUDDY_H__
