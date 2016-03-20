@@ -74,27 +74,6 @@ static memory_segment_t get_segment(buddy_descriptor_t *desc, int order) {
     return segment;
 }
 
-// FOR DEBUG ONLY!
-static void print_levels(void) {
-    printf(ANSI_COLOR_YELLOW);
-    printf("list sizes:\n");
-    for (int i = 0; i < MAX_LEVELS; i++) {
-        printf("level %d size %d   ", i, list_size(list + i));
-            struct list_head *current_head = list[i].next;
-            while (current_head != list + i) {
-                buddy_descriptor_t *desc = CONTAINER_OF(current_head, buddy_descriptor_t, ptrs);
-                memory_segment_t segment = get_segment(desc, desc->order);
-                printf("  %#llx-%#llx (state: %d)  ", segment.begin, segment.end, desc->state);
-                current_head = current_head->next;
-            }
-        printf("\n");
-    }
-    printf(ANSI_COLOR_RESET);
-
-    printf("PAGE = %#llx, n_buddyes = %d\n", PAGE, n_buddyes);
-}
-// FOR DEBUG ONLY!
-
 static void set_state(buddy_descriptor_t *desc) {
     memory_segment_t segment = get_segment(desc, 0);
 
@@ -192,8 +171,6 @@ int init_buddy_allocator(void) {
 
     init_buddy_descriptors();
     build_lists();
-
-    print_levels();
 
     return 0;
 }
