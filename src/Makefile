@@ -12,7 +12,7 @@ ADEP:= $(ASM:.S=.d)
 
 SRC := backtrace.c time.c interrupt.c i8259a.c stdio.c vsinkprintf.c stdlib.c \
 	serial.c console.c string.c ctype.c list.c main.c memmap.c boot_allocator.c \
-	buddy.c
+	buddy.c paging.c
 OBJ := $(AOBJ) $(SRC:.c=.o)
 DEP := $(ADEP) $(SRC:.c=.d)
 

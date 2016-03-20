@@ -29,6 +29,10 @@ static uint64_t n_buddyes;
 static struct list_head list[MAX_LEVELS];
 static char *first_addr;
 
+
+uint64_t get_pages_count(void) {
+    return n_buddyes;
+}
 /**
  * returns the order number of descripor among all descriptors
  */
@@ -204,12 +208,21 @@ static inline int get_min_order_to_cover(uint64_t size) {
     return order;
 }
 
+/**
+ * returned pointer is ready to use if segment lies in first 4G.
+ * if it's higher than due to the old paging this address would
+ * be incorrect (using it would lead to page fault). 
+ * After we do make_new_paging() this new paging 
+ * would cover all phys. memory so the address we return would
+ * be correct and ready to use. 
+ * We don't need so big sizes before making new paging so we wont 
+ * fail.
+ */
 void* buddy_allocate(uint64_t size) {
     int min_order = get_min_order_to_cover(size);
     int cur_order = min_order;
 
     while (list_empty(list + cur_order)) {
-        printf(ANSI_COLOR_MAGENTA "level %d is empty. goint on %d\n" ANSI_COLOR_RESET, cur_order, cur_order + 1);
         cur_order++;
         if (cur_order >= MAX_LEVELS)
             return NULL;
@@ -219,7 +232,6 @@ void* buddy_allocate(uint64_t size) {
         buddy_descriptor_t *desc = 
             CONTAINER_OF(list_first(list + cur_order), buddy_descriptor_t, ptrs);
         split(desc);
-        printf(ANSI_COLOR_MAGENTA "splited order %d, going on %d\n" ANSI_COLOR_RESET, cur_order, cur_order);
         cur_order--;
     }
 
@@ -229,13 +241,6 @@ void* buddy_allocate(uint64_t size) {
     list_del(&allocated->ptrs);
 
     memory_segment_t segment = get_segment(allocated, allocated->order);
-
-    printf("needed size %lld allocated size %lld\n", size, PAGE * (1L << allocated->order));
-    printf("allocated range: %#llx-%#llx\n", segment.begin, segment.end);
-
-    printf("\n\nAFTER ALLOCATION\n\n");
-    print_levels();
-    printf("\n\nAFTER ALLOCATION\n\n");
 
     return va(segment.begin);
 }
@@ -265,8 +270,4 @@ void buddy_free(void *ptr) {
             break;
         }
     }
-
-    printf("\n\nAFTER FREE\n\n");
-    print_levels();
-    printf("\n\nAFTER FREE\n\n");
 }

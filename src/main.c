@@ -5,6 +5,7 @@
 #include "memmap.h"
 #include "common.h"
 #include "buddy.h"
+#include "paging.h"
 
 void print_memory_map(void) {
     extern mmap_t os_mmap;
@@ -32,22 +33,30 @@ void main(void)
             goto kernel_end;
         }
 // FOR DEBUG ONLY!
-        printf("initialized\n");
+        printf(ANSI_COLOR_GREEN "initialized" ANSI_COLOR_RESET "\n");
 
-        char *ptr[10];
+/*
+        char *ptr[100];
 
         int n = 1;
-        int m = 3;
+        int m = 10;
         for (int j = 0; j < n; j++) {
-            for (int i = 0; i < m; i++) {
-                ptr[i] = (char *)buddy_allocate(2097152 * 3 + 1);
+            for (int i = 0; i < 2 * m; i++) {
+                ptr[i] = (char *)buddy_allocate(2097152 * (1L << (i % m)));
                 printf(ANSI_COLOR_BLUE "ptr: %#llx\n" ANSI_COLOR_RESET, ptr[i]);
             }
-            for (int i = 0; i < m; i++) {
+            for (int i = 0; i < 2 * m; i++) {
                 buddy_free(ptr[i]);
             }
         }
+*/
 // FOR DEBUG ONLY!
+        if (make_new_paging() < 0)
+            printf(ANSI_COLOR_RED "could not set new paging" ANSI_COLOR_RESET "\n");
+        else {
+            activate_new_paging();
+            printf(ANSI_COLOR_GREEN "new paging activated!" ANSI_COLOR_RESET "\n");
+        }
     } else {
         printf(ANSI_COLOR_RED "multiboot did not provide memory map, aborting." ANSI_COLOR_RESET "\n");
         goto kernel_end;

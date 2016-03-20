@@ -11,3 +11,7 @@
 *.vrb
 *.o
 *.d
+*.swp
+*.py
+/src/__pycache__
+kernel

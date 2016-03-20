@@ -5,6 +5,9 @@
 #include <stdint.h>
 
 #include "memory.h"
+#include "buddy.h"
+#include "memmap.h"
+#include "common.h"
 
 typedef uint64_t pte_t;
 
@@ -12,6 +15,13 @@ typedef uint64_t pte_t;
 #define PTE_WRITE   ((pte_t)1 << 1)
 #define PTE_USER    ((pte_t)1 << 2)
 #define PTE_LARGE   ((pte_t)1 << 7)
+
+#define FRAME_SIZE (1L << 21) // 2MiB
+#define TABLE_SIZE 512
+
+int create_paging(uint64_t va_start, uint64_t pa_start, uint64_t len); //doesn't flush tlb!
+int make_new_paging(void);
+void activate_new_paging(void);
 
 static inline bool pte_present(pte_t pte)
 { return (pte & PTE_PRESENT) != 0; }

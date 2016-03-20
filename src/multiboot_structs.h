@@ -92,7 +92,7 @@ struct mmap
 /**
  * According to GRUB specification it's mmap maximum size is 32.
  * http://fossies.org/dox/grub-2.00/multiboot__mmap_8c_source.html#l00034
- * In our case we make it maximum 33 in length as we need to reserve our OS
+ * In our case we make it maximum 64 in length as we need to reserve our OS
  * And plus I allocate a bit more. Why not?
  */
 } __attribute__((packed));

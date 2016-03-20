@@ -7,7 +7,7 @@ static multiboot_mmap_entry_t from_segment_to_entry(const memory_segment_t *segm
 
     entry.size = sizeof(multiboot_mmap_entry_t) - sizeof(uint32_t); // .size field has type uint32_t
     entry.addr = segment->begin;
-    entry.len  = segment->end - segment->begin;
+    entry.len  = segment->end - segment->begin + 1;
     entry.type = 2; // we only need to reserve memory. We don't free it. Never
 
     return entry;
@@ -24,7 +24,6 @@ static multiboot_mmap_entry_t from_segment_to_entry(const memory_segment_t *segm
  */
 
 memory_segment_t boot_reserve_memory(uint64_t size) {
-    printf("size is: %lld\n", size);
     memory_segment_t new_segment;
 
     for (int i = 0; i < os_mmap.size; i++) {
@@ -32,7 +31,6 @@ memory_segment_t boot_reserve_memory(uint64_t size) {
 
         new_segment.begin = current->addr;
         new_segment.end = new_segment.begin + size - 1;
-        printf("trying segment %#llx-%#llx\n", new_segment.begin, new_segment.end);
 
         /**
          * we also check that this segment is inside first 4GB
@@ -49,8 +47,6 @@ memory_segment_t boot_reserve_memory(uint64_t size) {
         new_segment.begin = current->addr + current->len;
         new_segment.end = new_segment.begin + size - 1;
 
-        printf("trying segment %#llx-%#llx\n", new_segment.begin, new_segment.end);
-
         if (is_free(&new_segment) && new_segment.end <= UINT32_MAX) {
             mmap_add_entry(from_segment_to_entry(&new_segment));
             return new_segment;
@@ -64,7 +60,6 @@ memory_segment_t boot_reserve_memory(uint64_t size) {
      * begin greater than end
      */
 
-    printf("No fit");
     new_segment.begin = 1;
     new_segment.end = 0;
 
