@@ -18,8 +18,8 @@ static multiboot_mmap_entry_t make_os_mmap_entry() {
     extern char bss_phys_end[];
 
     uint64_t os_addr_begin = (uint64_t) text_phys_begin;
-    uint64_t os_addr_end   = (uint64_t) bss_phys_end;
-    
+    uint64_t os_addr_end   = (uint64_t) bss_phys_end - 1;
+
     multiboot_mmap_entry_t os_entry;
     os_entry.size = sizeof(multiboot_mmap_entry_t) - sizeof(uint32_t); // .size field has type uint32_t
     os_entry.addr = os_addr_begin;
