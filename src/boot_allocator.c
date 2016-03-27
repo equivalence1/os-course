@@ -15,7 +15,7 @@ static multiboot_mmap_entry_t from_segment_to_entry(const memory_segment_t *segm
 
 
 /**
- * I search for a free memory segment in the very beginning and the very end
+ * I search for a free memory segment in the very beginning and right after the very end
  * of the current mmap entry. If this segment is ok, I add it to the mmap.
  * This means that according to the size of mmap_t->entries I only
  * can register up to 100 new segments. It's gonna be enough for buddy
