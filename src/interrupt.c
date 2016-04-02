@@ -4,6 +4,7 @@
 #include "memory.h"
 #include "string.h"
 #include "stdio.h"
+#include "thread.h"
 
 #include <stdint.h>
 
@@ -144,6 +145,9 @@ void isr_common_handler(struct thread_regs *ctx)
 
 	const int irqno = intno - IDT_EXCEPTIONS;
 	const irq_t irq = handler[irqno];
+
+    /* I need to know current rsp scheduler */
+    current_thread->rsp = ctx;
 
 	mask_irq(irqno);
 	ack_irq(irqno);

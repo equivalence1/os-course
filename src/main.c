@@ -3,10 +3,11 @@
 #include "memory.h"
 #include "serial.h"
 #include "paging.h"
+#include "thread.h"
 #include "stdio.h"
 #include "misc.h"
 #include "time.h"
-
+/*
 static bool range_intersect(phys_t l0, phys_t r0, phys_t l1, phys_t r1)
 {
 	if (r0 <= l1)
@@ -95,6 +96,23 @@ static void slab_smoke_test(void)
 	kmem_cache_destroy(cache);
 #undef ALLOCS
 }
+*/
+static void print_thread_num(void *arg) {
+    (void)sizeof(arg);
+    printf("hello from pid %d\n", current_thread->pid);
+}
+
+void threads_smoke_test() {
+    printf("test beginnig\n");
+    printf("init has pid %d, threads in queue %d\n", current_thread->pid, list_size(&current_thread->threads_list));
+#define N_THREADS 2
+    for (int i = 0; i < N_THREADS; i++) {
+        printf("one more\n");
+        create_thread(&print_thread_num, NULL);
+        printf("threads in queue %d\n", list_size(&current_thread->threads_list));
+    }
+#undef N_THREADS
+}
 
 void main(void)
 {
@@ -106,10 +124,12 @@ void main(void)
 	setup_paging();
 	setup_alloc();
 	setup_time();
-	local_irq_enable();
+    setup_threads();
+//	local_irq_enable();
 
-	buddy_smoke_test();
-	slab_smoke_test();
+//	buddy_smoke_test();
+//	slab_smoke_test();
+    threads_smoke_test(); // why smoke?
 
 	while (1);
 }

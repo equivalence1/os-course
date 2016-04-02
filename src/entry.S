@@ -54,6 +54,42 @@ common_handler:
 	addq $136, %rsp
 	iretq
 
+# void switch_threads(void **old_sp, void *new_sp); // C signature
+# I follow thread_regs.h order of registers preserving.
+# see comment in setup_regs in thread.c
+#
+# we need to save `%rflags` because threads can call 
+# schedule() both inside and outside of interrupt
+# handler. In first case we have cli, in second sti.
+# So to different threads can have different rflags
+#
+# we don't need to save other nonvolatile registers
+# because if `switch_threads` has been called inside
+# irq_handler, it would save them for us. If thread
+# called `switch_threads` by itself then it should
+# preserve this registers by itself if he needs them
+# as it is caller-save registers.
+    .global switch_threads
+switch_threads:
+    subq $160, %rsp
+    SAVE_VOLATILE
+
+    #save rflags
+    lahf
+    movq %rax, 152(%rsp)
+
+    #switch context
+    movq %rsp, (%rdi) # save SP (see ABI arguments passing)
+    movq %rsi, %rsp   # restore SP
+
+    #restore rflags
+    movq 152(%rsp), %rax
+    sahf
+
+    RESTORE_VOLATILE
+    addq $160, %rsp
+    retq
+
 #define ENTRY_NAME(nr) entry ## nr
 
 #define ISR(nr) \

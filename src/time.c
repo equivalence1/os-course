@@ -3,6 +3,7 @@
 #include "ioport.h"
 #include "stdio.h"
 #include "time.h"
+#include "scheduler.h"
 
 /*
  * Timer/Counter Control Register Format:
@@ -56,6 +57,8 @@ static void i8254_interrupt_handler(int irq)
 {
 	(void) irq;
 	++jiffies;
+
+    schedule();
 }
 
 void setup_time(void)
