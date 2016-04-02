@@ -9,3 +9,5 @@
 *.nav
 *.snm
 *.vrb
+*.o
+*.d
