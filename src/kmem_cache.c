@@ -490,11 +490,14 @@ void *kmem_alloc(size_t size)
 
 	const int i = kmem_cache_index(size);
 
-	if (i == -1)
+	if (i == -1) {
+        unlock(&alloc_lock);
 		return 0;
+    }
 
+    void *ptr = kmem_cache_alloc(kmem_pool[i]);
     unlock(&alloc_lock);
-	return kmem_cache_alloc(kmem_pool[i]);
+	return ptr;
 }
 
 void kmem_free(void *ptr)
