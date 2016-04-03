@@ -3,6 +3,8 @@
 #include "stdio.h"
 #include "list.h"
 
+static spinlock_t alloc_lock;
+static spinlock_t free_lock;
 
 struct kmem_slab_ops {
 	void *(*alloc)(struct kmem_cache *, struct kmem_slab *);
@@ -484,29 +486,44 @@ static int kmem_cache_index(size_t size)
 
 void *kmem_alloc(size_t size)
 {
+    lock(&alloc_lock);
+
 	const int i = kmem_cache_index(size);
 
 	if (i == -1)
 		return 0;
 
+    unlock(&alloc_lock);
 	return kmem_cache_alloc(kmem_pool[i]);
 }
 
 void kmem_free(void *ptr)
 {
-	if (!ptr)
+    lock(&free_lock);
+
+	if (!ptr) {
+        unlock(&free_lock);
 		return;
+    }
 
 	struct kmem_slab *slab = kmem_get_slab(ptr);
 
-	if (!slab)
+	if (!slab) {
+        unlock(&free_lock);
 		return;
+    }
 
 	kmem_cache_free(slab->cache, ptr);
+    unlock(&free_lock);
 }
 
 void setup_alloc(void)
 {
+    alloc_lock.ticket = 0;
+    alloc_lock.users  = 0;
+    free_lock.ticket = 0;
+    free_lock.users  = 0;
+
 	kmem_small_cache_setup();
 	kmem_large_cache_setup();
 

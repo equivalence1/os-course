@@ -2,6 +2,7 @@
 #define __KMEM_CACHE_H__
 
 #include "kernel.h"
+#include "locks.h"
 
 struct kmem_cache;
 
