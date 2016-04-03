@@ -5,5 +5,7 @@
 #include "interrupt.h"
 
 void schedule(void);
+void yield(void);
+void join(int pid);
 
 #endif // __SCHEDULER_H__

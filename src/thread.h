@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include "memory.h"
+#include "kernel.h"
 #include "interrupt.h"
 #include "scheduler.h"
 #include "kmem_cache.h"
@@ -10,13 +11,7 @@
 
 #include <stdint.h>
 
-/** 
- * 256K for each thread.
- * if it's not enough we should use
- * buddy allocator or thread can 
- * allocate more space by itself
- */
-#define STACK_SIZE (1024) //TODO need large
+#define STACK_SIZE (4 * 1024) //4K for each thread
 
 typedef int pid_t;
 
@@ -33,10 +28,10 @@ typedef struct thread_desc thread_desc_t;
 
 /* global cyclic queue of all currently alive threads */
 thread_desc_t init;
-
 thread_desc_t *current_thread;
 
 void setup_threads(void);
+int pid_in_list(pid_t);
 pid_t create_thread(void (*fptr)(void *), void *arg);
 
 #endif // __THREAD_H__

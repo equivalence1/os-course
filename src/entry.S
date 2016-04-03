@@ -61,7 +61,9 @@ common_handler:
 # we need to save `%rflags` because threads can call 
 # schedule() both inside and outside of interrupt
 # handler. In first case we have cli, in second sti.
-# So to different threads can have different rflags
+# So to different threads can have different rflags.
+# Also we need to initialize some %rflag for the 
+# threads which was firstly invoked here.
 #
 # we don't need to save other nonvolatile registers
 # because if `switch_threads` has been called inside
