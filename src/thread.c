@@ -3,7 +3,7 @@
 static int last_pid;
 
 /* exit() analog */
-static void thread_exit(void) {
+void thread_exit(void) {
     local_irq_disable();
     list_del(&current_thread->threads_list);
 

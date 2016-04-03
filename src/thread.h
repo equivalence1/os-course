@@ -30,6 +30,7 @@ typedef struct thread_desc thread_desc_t;
 thread_desc_t init;
 thread_desc_t *current_thread;
 
+void thread_exit(void);
 void setup_threads(void);
 int pid_in_list(pid_t);
 pid_t create_thread(void (*fptr)(void *), void *arg);

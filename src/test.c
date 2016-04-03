@@ -35,6 +35,18 @@ static void locking_print(void *arg) {
         unlock(lock2);
 }
 
+static void infinite_circle(void *arg) {
+    (void)sizeof(arg);
+
+    printf("starting \"infinite\" cirle\n");
+    int x = 0;
+    while (1) {
+        x++;
+        if (x % 10000000 == 0)
+            thread_exit();
+    }
+}
+
 void test_threads() {
     lock1 = (spinlock_t *)kmem_alloc(sizeof(spinlock_t));
     lock1->users = 0;
@@ -69,6 +81,9 @@ void test_threads() {
 
     // after that we should see second print before first
     // even though first is before second in threads queue
+
+    int inf_pid = create_thread(&infinite_circle, NULL);
+    join(inf_pid);
 
     printf("test end, threads in queue %d\n", list_size(&current_thread->threads_list));
 #undef N_THREADS
