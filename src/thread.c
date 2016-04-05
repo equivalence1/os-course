@@ -33,7 +33,9 @@ static void main_function_wrapper(void) {
  */
 static uint64_t make_rflags(void) {
     uint64_t current_rflags = 0;
-    __asm__ volatile ("lahf");
+
+    __asm__ volatile ("pushf");
+    __asm__ volatile ("popq %rax");
     __asm__ volatile ("movq %%rax, %0" : "=r"(current_rflags));
 
     uint64_t to_clear = UINTMAX_MAX - BIT_CONST(0) - BIT_CONST(2) -
