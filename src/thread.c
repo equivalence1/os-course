@@ -21,7 +21,6 @@ void thread_exit(void) {
 }
 
 static void main_function_wrapper(void) {
-    local_irq_enable();
     current_thread->fptr(current_thread->arg);
     thread_exit();
 }
@@ -43,7 +42,7 @@ static uint64_t make_rflags(void) {
 
     current_rflags = current_rflags & to_clear;
 
-    return current_rflags;
+    return current_rflags | INTERRUPT_FLAG;
 }
 
 static void setup_stack(thread_desc_t *thread_desc) {

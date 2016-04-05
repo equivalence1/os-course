@@ -73,23 +73,18 @@ common_handler:
 # as it is caller-save registers.
     .global switch_threads
 switch_threads:
-    subq $160, %rsp
+    pushf # saving rflags
+    subq $152, %rsp
     SAVE_VOLATILE
-
-    #save rflags
-    lahf
-    movq %rax, 152(%rsp)
 
     #switch context
     movq %rsp, (%rdi) # save SP (see ABI arguments passing)
     movq %rsi, %rsp   # restore SP
 
-    #restore rflags
-    movq 152(%rsp), %rax
-    sahf
-
     RESTORE_VOLATILE
-    addq $160, %rsp
+    addq $152, %rsp
+    popf # restoring rflags
+
     retq
 
 #define ENTRY_NAME(nr) entry ## nr

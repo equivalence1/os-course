@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 #define STACK_SIZE (4 * 1024) //4K for each thread
+#define INTERRUPT_FLAG (1 << 9)
 
 typedef int pid_t;
 
