@@ -234,7 +234,7 @@ struct list_head* fs_readdir(const char *path) {
 /**
  * I made this function only for testing purposes.
  */
-static void print_file(size_t indent, inode_t *file) {
+static void print_dir(size_t indent, inode_t *file) {
     for (size_t i = 0; i < indent; i++)
         printf(" ");
     if (file->is_dir) {
@@ -248,7 +248,7 @@ static void print_file(size_t indent, inode_t *file) {
         int size = list_size(dirs);
         for (int i = 0; i < size; i++) {
             dirs = dirs->next;
-            print_file(indent + 4, ((inode_holder_t *)LIST_ENTRY(dirs, inode_holder_t, holders))->child);
+            print_dir(indent + 4, ((inode_holder_t *)LIST_ENTRY(dirs, inode_holder_t, holders))->child);
         }
     } else {
         printf("%s *\n", file->file_name);
@@ -259,5 +259,5 @@ static void print_file(size_t indent, inode_t *file) {
  * I made this function only for testing purposes.
  */
 void print_full_fs(void) {
-    print_file(0, &root);
+    print_dir(0, &root);
 }
